@@ -17,6 +17,38 @@ I might look at data on party affiliation in the 2016, 2020, and 2024 elections.
 
   My research question for this final project will be "Did political polarization increase significantly during Donald Trump's presidency?". My hypothesis is that political polarization significantly increased during the 2016-2020 presidency, and has been maintained into the 2024 election. Donald Trump's presidency brought with it a large amount of merchandise and activity on social media, particularly on what was formerly Twitter, now X. This led to the creation of a group commonly referred to as "MAGA". The question I present today is inspired by whether these occurrences are a product of increased political polarization, or if they have simply made already polarized people more clearly visible. I will be using two data sets in my project. One is the "U.S. Partisanship and Presidential Approval Dataset" from RoperCenter, and the other is a collection of polls gathered on Fivethirtyeight. The reason I will be using two datasets is because the RoperCenter dataset only has information going to the 2020 election, while the Fivethirtyeight dataset only includes information from the ongoing 2024 election. Up to the 2020 election I will be comparing an individual's self-reported party affiliation with their approval of a president. A high amount of individuals from one party reporting approval for a president from another party would imply a low political polarization, as people are willing to look beyond party lines and evaluate presidents based on their actions. For the 2024 election, I will be comparing an individual's self-reported party affiliation with who they plan to vote for. If many individuals who identify as part of one party are voting for a president of a different party, then political polarization should be low. Admittedly this is not a perfect comparison between datasets, but I believe this to be acceptable because the primary point of interest is the 2016 and 2020 elections, and the 2024 election will likely act as supplementary material. If the 2016 or 2020 election polls show much lower cross-party approval rates than previous elections, then my hypothesis will be proven right. If cross-party approval rates did not significantly lower in the 2016 or 2020 elections then my hypothesis would be wrong.
   
+## Data Visualization
+  
+```{r}
+library(tidyverse)
+library(ggplot2)
+Approval_pres <- read_csv("31120311.csv")
+vote_2024 <- read_csv("president_polls.csv")
+```
+
+```{r}
+Approval_pres <- Approval_pres |>
+  mutate(pres_party = case_when(year >= 1948 & year < 1953 ~ "D",
+                                year >= 1954 & year < 1961 ~ "R",
+                                year >= 1962 & year < 1968 ~ "D",
+                                year >= 1970 & year < 1977 ~ "R",
+                                year >= 1978 & year < 1980 ~ "D",
+                                year >= 1982 & year < 1992 ~ "R",
+                                year >= 1993 & year < 2001 ~ "D",
+                                year >= 2002 & year < 2009 ~ "R",
+                                year >= 2010 & year < 2017 ~ "D",
+                                year >= 2018 ~ "R"))
+graph_data <- Approval_pres |>
+  filter(!is.na(pres_party))
+
+```
+
+```{r}
+graph_data |>
+  ggplot(aes(x = pres_party, y = year)) +
+  geom_point()
+```
+
   
   Links to the datasets:
   
