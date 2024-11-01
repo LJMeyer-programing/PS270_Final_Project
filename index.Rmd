@@ -38,19 +38,29 @@ Approval_pres <- Approval_pres |>
                                 year >= 2002 & year < 2009 ~ "R",
                                 year >= 2010 & year < 2017 ~ "D",
                                 year >= 2018 ~ "R"))
-graph_data <- Approval_pres |>
-  filter(!is.na(pres_party))
+approval_graph1 <- Approval_pres |>
+  filter(!is.na(pres_party)) |>
+  group_by(year, pres_party) |>
+  mutate(pres_approve2 = if_else(pres_approve2 == "1 Approve", 1, 0)) |>
+  summarize(approval_mean = mean(pres_approve2, na.rm = T))
 
 ```
 
 ```{r}
-graph_data |>
-  ggplot(aes(x = pres_party, y = year)) +
-  geom_point()
+Milestone3_graph <- approval_graph1 |>
+  ggplot(aes(x = year, y = approval_mean, group = 1)) +
+  geom_line(aes(color = pres_party)) +
+  scale_color_manual(values = c("royalblue3", "indianred2"), name = "Political Party", labels = c("Democrat", "Republican")) +
+  labs(x = "Year",
+       y = "Average Approval",
+       title = "Presidential Approval Over Time",
+       subtitle = "By Liam Meyer")
+Milestone3_graph
 ```
+This graph shows the average proportion of people who approved of the president at a point in time, with 1 being everyone approved of the president and 0 being no one did. My final project will likely contain a graph like this on but with an addition of a line showing the proportion of people from specifically the opposing political party who approved of the president. 
 
   
-  Links to the datasets:
+## Links to the Datasets
   
   https://ropercenter.cornell.edu/ipoll/study?doi=10.25940/ROPER-31120311 (Ropercenter 2020 and earlier presidential approval rates)
   
