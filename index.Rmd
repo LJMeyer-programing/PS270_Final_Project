@@ -37,7 +37,16 @@ Approval_pres <- Approval_pres |>
                                 year >= 1993 & year < 2001 ~ "D",
                                 year >= 2002 & year < 2009 ~ "R",
                                 year >= 2010 & year < 2017 ~ "D",
-                                year >= 2018 ~ "R"))
+                                year >= 2018 ~ "R",
+                                year == 1953 ~ "Party Change",
+                                year == 1961 ~ "Party Change",
+                                year == 1968 ~ "Party Change",
+                                year == 1977 ~ "Party Change",
+                                year == 1980 ~ "Party Change",
+                                year == 1992 ~ "Party Change",
+                                year == 2001 ~ "Party Change",
+                                year == 2009 ~ "Party Change",
+                                year == 2017 ~ "Party Change"))
 approval_graph1 <- Approval_pres |>
   filter(!is.na(pres_party)) |>
   group_by(year, pres_party) |>
@@ -50,7 +59,7 @@ approval_graph1 <- Approval_pres |>
 Milestone3_graph <- approval_graph1 |>
   ggplot(aes(x = year, y = approval_mean, group = 1)) +
   geom_line(aes(color = pres_party)) +
-  scale_color_manual(values = c("royalblue3", "indianred2"), name = "Political Party", labels = c("Democrat", "Republican")) +
+  scale_color_manual(values = c("royalblue3", "grey1", "indianred2"), name = "Political Party", labels = c("Democrat", "Party Change", "Republican")) +
   labs(x = "Year",
        y = "Average Approval",
        title = "Presidential Approval Over Time",
@@ -59,6 +68,37 @@ Milestone3_graph
 ```
 This graph shows the average proportion of people who approved of the president at a point in time, with 1 being everyone approved of the president and 0 being no one did. My final project will likely contain a graph like this on but with an addition of a line showing the proportion of people from specifically the opposing political party who approved of the president. 
 
+  
+## Visualization and Analysis 1
+  
+```{r}
+Approval_pres <- Approval_pres |>
+  mutate(cross_party_approval = if_else(pres_approve2 == "1 Approve" &
+                                      democrat == "1 Dem" &
+                                      pres_party == "R" |
+                                      pres_approve2 == "1 Approve" &
+                                      republican == "1 Rep" &
+                                      pres_party == "D", 1, 0))
+```
+  
+```{r}
+Cross_Party_Graph1 <- Approval_pres |>
+  group_by(year, pres_party) |>
+  summarize(cross_mean = mean(cross_party_approval, na.rm = T)) |>
+  filter(!is.na(pres_party)) |>
+  ggplot(aes(x = year, y = cross_mean)) +
+  geom_col(aes(fill = pres_party)) +
+  scale_fill_manual(values = c("royalblue3", "grey1", "indianred2"), name = "Political Party", labels = c("Democrat", "Party Change", "Republican")) +
+  theme_bw() +
+  labs(x = "Year",
+       y = "Average Cross Party Approval",
+       title = "Cross Party Approval Over Time",
+       subtitle = "By Liam Mayer",
+       caption = "Data from RoperCenter")
+Cross_Party_Graph1
+```
+  
+  This graph shows the proportion of people who approved of a president from a political party other than their own. Unfortunately, the surveys used only provided the year they were taken, not the specific date, so years where the political party of the president changed are omitted from this graph. As can be seen here, the highest proportion of cross-party approval came in 1954, where almost 25% of Democrat voters approved of the Republican president. Republican voters appear to have a lower average cross-party approval rating no matter what year it is, but the early 2000s seems to mark a point where cross-party approval goes down drastically. It is therefore possible to assume that the 2000s marked a point where political polarization began drastically increasing. Therefore my initial hypothesis, that political polarization increased drastically around 2016, was incorrect. Instead, it appears as though some event or series of events in the early 2000s led to a drastically increased amount of political polarization visualized by a much lower cross-party approval rating in this graph.
   
 ## Links to the Datasets
   
