@@ -9,7 +9,114 @@ output:
 
 ## Official Final Introduction
 
-In this project I will be analyzing political polarization over time, with a particular focus on modern times. My research question for the project is: "Did political polarization increase significantly around the time of Donald Trump's campaign and presidency?". My hypothesis is that sometime before or after Donald Trump's election political polarization drastically increased. This is a particularly interesting question because of the political group known as "MAGA", or "Make America Great Again". This group formed in direct response to Donald Trump's presidential campaign, and many members are very politically polarized. It is unknown, however, whether people became very polarized at the same time as this group was formed, or if this group merely attracted and served as an outlet for people who were already polarized. 
+  In this project I will be analyzing political polarization over time, with a particular focus on modern times. My research question for the project is: "Did political polarization increase significantly around the time of Donald Trump's campaign and presidency?". My hypothesis is that sometime before or after Donald Trump's election political polarization drastically increased. 
+  This is a particularly interesting question because of the political group known as "MAGA", or "Make America Great Again". This group formed in direct response to Donald Trump's presidential campaign, and many members are very politically polarized. It is unknown, however, whether people became very polarized at the same time as this group was formed, or if this group merely attracted and served as an outlet for people who were already polarized. 
+
+## Official Final Data Section
+
+  Two data sources are used in this project. The first is the "U.S. Partisanship and Presidential Approval Dataset" from RoperCenter, which contains approval rates from 1948 to 2020. The key dependent variable in this analysis is political polarization. Political polarization will be measured through cross-party approval, with a lower level of cross-party presidential approval implying a higher level of political polarization. The independent variable will be the year, and my research question will be answered depending on when and if there is a jump in political polarization. The information used for these variables was gathered through various surveys. 
+  This project uses a Before and After research design. This means there is one group that is tested before and after the "treatment". Given that in this case the treatment is the presidential election, there is no way to create a control group. Without a control group it is impossible to use a differences-in-differences or cross-sectional research design, and the differences-in-differences research design is typically seen as the most accurate or reliable. Luckily, the samples go back long enough that an average increase in political polarization over time can be constructed, and a statistically significant spike in political polarization would be a visible outlier.
+
+```{r data extraction, echo=FALSE}
+library(tidyverse)
+library(ggplot2)
+Approval_pres <- read_csv("31120311.csv")
+vote_2024 <- read_csv("president_polls.csv")
+```
+
+```{r Approval graph data, echo=FALSE}
+Approval_pres <- Approval_pres |>
+  mutate(pres_party = case_when(year >= 1948 & year < 1953 ~ "D",
+                                year >= 1954 & year < 1961 ~ "R",
+                                year >= 1962 & year < 1968 ~ "D",
+                                year >= 1970 & year < 1977 ~ "R",
+                                year >= 1978 & year < 1980 ~ "D",
+                                year >= 1982 & year < 1992 ~ "R",
+                                year >= 1993 & year < 2001 ~ "D",
+                                year >= 2002 & year < 2009 ~ "R",
+                                year >= 2010 & year < 2017 ~ "D",
+                                year >= 2018 ~ "R",
+                                year == 1953 ~ "Party Change",
+                                year == 1961 ~ "Party Change",
+                                year == 1968 ~ "Party Change",
+                                year == 1977 ~ "Party Change",
+                                year == 1980 ~ "Party Change",
+                                year == 1992 ~ "Party Change",
+                                year == 2001 ~ "Party Change",
+                                year == 2009 ~ "Party Change",
+                                year == 2017 ~ "Party Change"))
+approval_graph1 <- Approval_pres |>
+  filter(!is.na(pres_party)) |>
+  group_by(year, pres_party) |>
+  mutate(pres_approve2 = if_else(pres_approve2 == "1 Approve", 1, 0)) |>
+  summarize(approval_mean = mean(pres_approve2, na.rm = T))
+```
+
+```{r approval line graph, echo=FALSE}
+Milestone3_graph <- approval_graph1 |>
+  ggplot(aes(x = year, y = approval_mean, group = 1)) +
+  geom_line(aes(color = pres_party)) +
+  scale_color_manual(values = c("royalblue3", "grey1", "indianred2"), name = "Political Party", labels = c("Democrat", "Party Change", "Republican")) +
+  labs(x = "Year",
+       y = "Average Approval",
+       title = "Presidential Approval Over Time",
+       subtitle = "By Liam Meyer")
+```
+
+```{r approval cross_party variable, echo=FALSE}
+Approval_pres <- Approval_pres |>
+  mutate(cross_party_approval = if_else(pres_approve2 == "1 Approve" &
+                                      democrat == "1 Dem" &
+                                      pres_party == "R" |
+                                      pres_approve2 == "1 Approve" &
+                                      republican == "1 Rep" &
+                                      pres_party == "D", 1, 0))
+```
+  
+```{r approval bar graph, echo=FALSE}
+Cross_Party_Graph1 <- Approval_pres |>
+  group_by(year, pres_party) |>
+  summarize(cross_mean = mean(cross_party_approval, na.rm = T)) |>
+  filter(!is.na(pres_party)) |>
+  ggplot(aes(x = year, y = cross_mean)) +
+  geom_col(aes(fill = pres_party)) +
+  scale_fill_manual(values = c("royalblue3", "grey1", "indianred2"), name = "Political Party", labels = c("Democrat", "Party Change", "Republican")) +
+  theme_bw() +
+  labs(x = "Year",
+       y = "Average Cross Party Approval",
+       title = "Cross Party Approval Over Time",
+       subtitle = "By Liam Mayer",
+       caption = "Data from RoperCenter")
+Cross_Party_Graph1
+```
+
+  The graph above shows the average cross-party approval rating from 1948 to 2020, with the colors representing the political party of the President. Election years where the political party of the president changed are omitted from this graph because the dataset uses surveys from multiple times throughout the year, so some of the approval ratings would be from before the new president is sworn into office and some would be from after that point. This graph shows a few interesting factors to take into consideration. The first is that there is a downward trend in cross party approval over time, implying a general increase in political polarization over time. The second is that democrats tend to be more approving of republican presidents then republicans are of democrat presidents.
+  
+## Results of Analysis
+
+  By adding a linear regression model for cross-party approval of just democrats, just republicans, and a combination of both it should be possible to see if or when there was a large spike in political polarization.
+
+```{r}
+lm(cross_party_approval ~ year + dem_rep, data = Approval_pres)
+```
+
+
+```{r}
+Approval_pres |>
+  group_by(year, pres_party) |>
+  summarize(cross_mean = mean(cross_party_approval, na.rm = T)) |>
+  filter(!is.na(pres_party)) |>
+  ggplot(aes(x = year, y = cross_mean)) +
+  geom_col(aes(fill = pres_party)) +
+  scale_fill_manual(values = c("royalblue3", "grey1", "indianred2"), name = "Political Party", labels = c("Democrat", "Party Change", "Republican")) +
+  theme_bw() +
+  labs(x = "Year",
+       y = "Average Cross Party Approval",
+       title = "Cross Party Approval Over Time",
+       subtitle = "By Liam Mayer",
+       caption = "Data from RoperCenter")
+```
+
 
 ## Project thoughts
 
