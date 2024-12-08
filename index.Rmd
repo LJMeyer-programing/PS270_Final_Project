@@ -9,17 +9,20 @@ output:
 
 ## Official Final Introduction
 
-    In this project I will be analyzing political polarization over time, with a particular focus on modern times. My research question for the project is: "Did political polarization increase significantly around the time of Donald Trump's campaign and presidency?". My hypothesis is that sometime before or after Donald Trump's election political polarization drastically increased. 
-    This is a particularly interesting question because of the political group known as "MAGA", or "Make America Great Again". This group formed in direct response to Donald Trump's presidential campaign, and many members are very politically polarized. It is unknown, however, whether people became very polarized at the same time as this group was formed, or if this group merely attracted and served as an outlet for people who were already polarized. 
+  In this project I will be analyzing political polarization over time, with a particular focus on modern times. My research question for the project is: "Did political polarization increase significantly around the time of Donald Trump's campaign and presidency?". My hypothesis is that sometime before or after Donald Trump's election political polarization drastically increased. 
+ 
+  This is a particularly interesting question because of the political group known as "MAGA", or "Make America Great Again". This group formed in direct response to Donald Trump's presidential campaign, and many members are very politically polarized. It is unknown, however, whether people became very polarized at the same time as this group was formed, or if this group merely attracted and served as an outlet for people who were already polarized. 
 
 ## Official Final Data Section
 
-    Two data sources are used in this project. The first is the "U.S. Partisanship and Presidential Approval Dataset" from RoperCenter, which contains approval rates from 1948 to 2020. The key dependent variable in this analysis is political polarization. Political polarization will be measured through cross-party approval, with a lower level of cross-party presidential approval implying a higher level of political polarization. The independent variable will be the year, and my research question will be answered depending on when and if there is a jump in political polarization. The information used for these variables was gathered through various surveys. 
-    This project uses a Before and After research design. This means there is one group that is tested before and after the "treatment". Given that in this case the treatment is the presidential election, there is no way to create a control group. Without a control group it is impossible to use a differences-in-differences or cross-sectional research design, and the differences-in-differences research design is typically seen as the most accurate or reliable. Luckily, the samples go back long enough that an average increase in political polarization over time can be constructed, and a statistically significant spike in political polarization would be a visible outlier.
+  The dataset this project draws from is the "U.S. Partisanship and Presidential Approval Dataset" from RoperCenter, which contains approval rates from 1948 to 2020. The key dependent variable in this analysis is political polarization. Political polarization will be measured through cross-party approval, with a lower level of cross-party presidential approval implying a higher level of political polarization. The independent variable will be the year, and my research question will be answered depending on when and if there is a jump in political polarization. The information used for these variables was gathered through various surveys. 
+  
+  This project uses a Before and After research design. This means there is one group that is tested before and after the "treatment". Given that in this case the treatment is the presidential election, there is no way to create a control group. Without a control group it is impossible to use a differences-in-differences or cross-sectional research design, and the differences-in-differences research design is typically seen as the most accurate or reliable. Luckily, the samples go back long enough that an average increase in political polarization over time can be constructed, and a statistically significant spike in political polarization would be a visible outlier.
 
 ```{r data extraction, echo=FALSE}
 library(tidyverse)
 library(ggplot2)
+library(knitr)
 Approval_pres <- read_csv("31120311.csv")
 vote_2024 <- read_csv("president_polls.csv")
 ```
@@ -91,11 +94,11 @@ Cross_Party_Graph1 <- Approval_pres_noind |>
 Cross_Party_Graph1
 ```
 
-    The graph above shows the average cross-party approval rating from 1948 to 2020, with the colors representing the political party of the President. Election years where the political party of the president changed are omitted from this graph because the dataset uses surveys from multiple times throughout the year, so some of the approval ratings would be from before the new president is sworn into office and some would be from after that point. This graph shows a few interesting factors to take into consideration. The first is that there is a downward trend in cross party approval over time, implying a general increase in political polarization over time. The second is that democrats tend to be more approving of republican presidents then republicans are of democrat presidents.
+  The graph above shows the average cross-party approval rating from 1948 to 2020, with the colors representing the political party of the President. Election years where the political party of the president changed are omitted from this graph because the dataset uses surveys from multiple times throughout the year, so some of the approval ratings would be from before the new president is sworn into office and some would be from after that point. This graph shows a few interesting factors to take into consideration. The first is that there is a downward trend in cross party approval over time, implying a general increase in political polarization over time. The second is that democrats tend to be more approving of republican presidents then republicans are of democrat presidents.
   
 ## Results of Analysis
 
-    By adding a linear regression model for cross-party approval of only democrats, only republicans, and a combination of both it should be possible to see if or when there was a large spike in political polarization.
+  By adding a linear regression model for cross-party approval of only democrats, only republicans, and a combination of both it should be possible to see if or when there was a large spike in political polarization.
 
 ```{r lm approal, echo=FALSE}
 dem_vote_app <- Approval_pres_noind |>
@@ -109,8 +112,24 @@ rep_vote_app <- Approval_pres_noind |>
 repvtr_app_lm <- lm(cross_party_approval ~ year, data = rep_vote_app)
 
 allvtr_app_lm <- lm(cross_party_approval ~ year, data = Approval_pres_noind)
-```
 
+names(allvtr_app_lm$coefficients) <- c("Intercept", "Yearly Change")
+names(demvtr_app_lm$coefficients) <- c("Intercept", "Yearly Change")
+names(repvtr_app_lm$coefficients) <- c("Intercept", "Yearly Change")
+
+knitr::kable(coef(allvtr_app_lm), col.names = c("Republicans & Democrats", "Value"), digits = 5)
+```
+  This table shows the decrease in the average cross-party approval of all American voters each year. While it is interesting, it doesn't mean too much without anything to compare it to.
+  
+```{r dem_app yearly change, echo=FALSE}
+knitr::kable(coef(demvtr_app_lm), col.names = c("Democrats", "Value"), digits = 5)
+```
+  The table above shows the decrease in the average cross-party approval of just democrat voters. There are two points of notice here. The first is the intercept, which is higher than that of all voters. The second is the slope, which is slightly lower than the slope for all voters. This means that democrat voters began with a higher average cross-party approval than the total amount of voters, but that number is decreasing slightly faster than the nation average.
+  
+```{r rep_app yearly change, echo=FALSE}
+knitr::kable(coef(repvtr_app_lm), col.names = c("Republicans", "Value"), digits = 5)
+```
+  Almost as a reverse to democrat voters, republican voters began with a lower average cross-party approval rate than the national average, but at the same time their rate is decreasing slower than the nation average.
 
 ```{r lm graph, echo=FALSE}
 Approval_pres_noind |>
@@ -132,13 +151,15 @@ Approval_pres_noind |>
        caption = "Data from RoperCenter")
 ```
 
-    With the added linear regression model, it is possible to see that republican voters tend to be less likely of approving of a president from the other party, suggesting that they may be more politically polarized than democrat voters. It is important to note, however, that voters from both parties were much more likely to approve of a president from the other party in the past than they are now. There is a spike of approval by republican voters from 1993 to 2000, reaching levels only consistently seen in the 1960s. There is also a large drop in approval around 2005.
-    The point of interest here around 2016, but this graph shows that time period as being quite consistent in cross-party approval. In fact, 2016 has only slightly more cross-party approval than the regression model would suggest. The rest of the 2010s are also a bit of a plateau, unlike periods such as the 1980s and 1950s, which show a large change in average cross-party approval. Therefore it is possible to conclude the main coefficient of interest, cross-party approval in 2016, is not statistically significant. My hypothesis of the campaign and election of Donald Trump increasing political polarization appears to be incorrect.
-    The data from this graph should not be interpreted causally. This graph merely shows the correlation between time and cross-party approval. That being said, it does appear as though some event in 2003 or 2004 led to a drastic decrease in cross-party approval by democrat voters. This possible factor also appears to have affected republican voters, as by the time a democrat president is in office their cross-party approval is also lower than the historical lowest point in 1951.
+  With the linear regression models, it is possible to see that republican voters tend to be less likely of approving of a president from the other party, suggesting that they may be more politically polarized than democrat voters. It is important to note, however, that voters from both parties were much more likely to approve of a president from the other party in the past than they are now. Furthermore, the average cross-party approval rate of democrat voters is decreasing faster than that of republican voters, implying that eventually democrat party  voters may be more polarized than the republican party voters. There is a spike of approval by republican voters from 1993 to 2000, reaching levels only consistently seen in the 1960s. There is also a large drop in approval around 2005.
+ 
+  The point of interest here around 2016, but this graph shows that time period as being quite consistent in cross-party approval. In fact, 2016 has only slightly more cross-party approval than the regression model would suggest. The rest of the 2010s are also a bit of a plateau, unlike periods such as the 1980s and 1950s, which show a large change in average cross-party approval. Therefore it is possible to conclude the main coefficient of interest, cross-party approval in 2016, is not statistically significant. My hypothesis of the campaign and election of Donald Trump increasing political polarization appears to be incorrect.
+  
+  The data from this graph should not be interpreted causally. This graph merely shows the correlation between time and cross-party approval. That being said, it does appear as though some event in 2003 or 2004 led to a drastic decrease in cross-party approval by democrat voters. This possible factor also appears to have affected republican voters, as by the time a democrat president is in office their cross-party approval is also lower than the historical lowest point in 1951.
   
 ## Conclusion
   
-    The results of this analysis show that there is a general decrease in average cross-party approval, implying a gradual rise in political polarization among American voters. However, the data does not support my conclusion that Donald Trump increased political polarization by a statistically significant amount. It instead appears as though the time of Donald Trump's election was politically polarized due to a gradual increase in political polarization over time. It does appear that some factor led to increased political polarization in the early 2000s, but what that factor may be is not revealed by the data. As it stands, there are a few confounding variables which may reduce the accuracy of this conclusion. The first is that the data was collected using surveys, and individuals who are not politically polarized may be less inclined to answer political surveys than those who are polarized. It would also be useful to gather data on the age, sex, race, and location of respondents. This information may be able to improve the accuracy of the conclusion by specifying if certain locations or groups were affected by political polarization at earlier times or to a greater extent than others. The generalized form of this dataset, taking all Americans as a single group, allows for a relatively accurate representation of overall rates of political polarization, but it fails to show the deeper details which would provide a more complete understanding of how political polarization developed over time. 
+  The results of this analysis show that there is a general decrease in average cross-party approval, implying a gradual rise in political polarization among American voters. However, the data does not support my conclusion that Donald Trump increased political polarization by a statistically significant amount. It instead appears as though the time of Donald Trump's election was politically polarized due to a gradual increase in political polarization over time. It does appear that some factor led to increased political polarization in the early 2000s, but what that factor may be is not revealed by the data. As it stands, there are a few confounding variables which may reduce the accuracy of this conclusion. The first is that the data was collected using surveys, and individuals who are not politically polarized may be less inclined to answer political surveys than those who are polarized. It would also be useful to gather data on the age, sex, race, and location of respondents. This information may be able to improve the accuracy of the conclusion by specifying if certain locations or groups were affected by political polarization at earlier times or to a greater extent than others. The generalized form of this dataset, taking all Americans as a single group, allows for a relatively accurate representation of overall rates of political polarization, but it fails to show the deeper details which would provide a more complete understanding of how political polarization developed over time. 
   
   
   
