@@ -19,7 +19,7 @@ output:
   
   This project uses a Before and After research design. This means there is one group that is tested before and after the "treatment". Given that in this case the treatment is the presidential election, there is no way to create a control group. Without a control group it is impossible to use a differences-in-differences or cross-sectional research design, and the differences-in-differences research design is typically seen as the most accurate or reliable. Luckily, the samples go back long enough that an average increase in political polarization over time can be constructed, and a statistically significant spike in political polarization would be a visible outlier.
 
-```{r data extraction, echo=FALSE}
+```{r data extraction}
 library(tidyverse)
 library(ggplot2)
 library(knitr)
@@ -27,7 +27,7 @@ Approval_pres <- read_csv("31120311.csv")
 vote_2024 <- read_csv("president_polls.csv")
 ```
 
-```{r Approval graph data, echo=FALSE}
+```{r Approval graph data}
 Approval_pres <- Approval_pres |>
   mutate(pres_party = case_when(year >= 1948 & year < 1953 ~ "D",
                                 year >= 1954 & year < 1961 ~ "R",
@@ -55,18 +55,7 @@ approval_graph1 <- Approval_pres |>
   summarize(approval_mean = mean(pres_approve2, na.rm = T))
 ```
 
-```{r approval line graph, echo=FALSE}
-Milestone3_graph <- approval_graph1 |>
-  ggplot(aes(x = year, y = approval_mean, group = 1)) +
-  geom_line(aes(color = pres_party)) +
-  scale_color_manual(values = c("royalblue3", "grey1", "indianred2"), name = "Political Party", labels = c("Democrat", "Party Change", "Republican")) +
-  labs(x = "Year",
-       y = "Average Approval",
-       title = "Presidential Approval Over Time",
-       subtitle = "By Liam Meyer")
-```
-
-```{r approval cross_party variable, echo=FALSE}
+```{r approval cross_party variable}
 Approval_pres_noind <- Approval_pres |>
   filter(dem_rep != "-99 N/A, Independent, Other") |>
   mutate(cross_party_approval = if_else(pres_approve2 == "1 Approve" &
@@ -77,7 +66,7 @@ Approval_pres_noind <- Approval_pres |>
                                       pres_party == "D", 1, 0))
 ```
   
-```{r approval bar graph, echo=FALSE}
+```{r approval bar graph}
 Cross_Party_Graph1 <- Approval_pres_noind |>
   group_by(year, pres_party) |>
   summarize(cross_mean = mean(cross_party_approval, na.rm = T)) |>
@@ -100,7 +89,7 @@ Cross_Party_Graph1
 
   By adding a linear regression model for cross-party approval of only democrats, only republicans, and a combination of both it should be possible to see if or when there was a large spike in political polarization.
 
-```{r lm approal, echo=FALSE}
+```{r lm approal}
 dem_vote_app <- Approval_pres_noind |>
   filter(dem_rep == "1 Democrat")
 
@@ -121,17 +110,17 @@ knitr::kable(coef(allvtr_app_lm), col.names = c("Republicans & Democrats", "Valu
 ```
   This table shows the decrease in the average cross-party approval of all American voters each year. While it is interesting, it doesn't mean too much without anything to compare it to.
   
-```{r dem_app yearly change, echo=FALSE}
+```{r dem_app yearly change}
 knitr::kable(coef(demvtr_app_lm), col.names = c("Democrats", "Value"), digits = 5)
 ```
   The table above shows the decrease in the average cross-party approval of just democrat voters. There are two points of notice here. The first is the intercept, which is higher than that of all voters. The second is the slope, which is slightly lower than the slope for all voters. This means that democrat voters began with a higher average cross-party approval than the total amount of voters, but that number is decreasing slightly faster than the nation average.
   
-```{r rep_app yearly change, echo=FALSE}
+```{r rep_app yearly change}
 knitr::kable(coef(repvtr_app_lm), col.names = c("Republicans", "Value"), digits = 5)
 ```
   Almost as a reverse to democrat voters, republican voters began with a lower average cross-party approval rate than the national average, but at the same time their rate is decreasing slower than the nation average.
 
-```{r lm graph, echo=FALSE}
+```{r lm graph}
 Approval_pres_noind |>
   group_by(year, pres_party) |>
   summarize(cross_mean = mean(cross_party_approval, na.rm = T)) |>
